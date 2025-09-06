@@ -1,0 +1,49 @@
+networks:
+  taski-net:
+
+volumes:
+  pg_data:
+  static:
+
+services:
+  db:
+    image: postgres:13.10
+    env_file: .env
+    networks:
+      - taski-net
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    env_file: .env 
+    expose: ["8000"]
+    networks: [taski-net]
+    depends_on:
+      - db
+    volumes:
+      - static:/backend_static
+
+  frontend:
+    build: ./frontend
+    expose: ["80"]
+    networks: [taski-net]
+    command: >
+      sh -lc "mkdir -p /frontend_static/frontend
+      && rm -rf /frontend_static/frontend/*
+      && cp -r /app/build/* /frontend_static/frontend/"
+    restart: "no"
+    volumes:
+      - static:/frontend_static
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    depends_on: [backend, frontend]
+    networks: [taski-net]
+    restart: unless-stopped
+    volumes:
+      - static:/staticfiles
