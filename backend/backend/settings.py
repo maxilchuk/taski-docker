@@ -8,7 +8,7 @@ SECRET_KEY = 'django-insecure-j_89af+30&&4qm*8z9_(^zz8p4-ho8z_m6ylm0s$h!-p@on1_^
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['ya16api.ddns.net', 'localhost', '127.0.0.1' ]
+ALLOWED_HOSTS = ['ya16api.ddns.net', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -59,8 +59,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-
 DATABASES = {
     'default': {
         # Меняем настройку Django: теперь для работы будет использоваться
