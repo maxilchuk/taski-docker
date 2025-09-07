@@ -194,46 +194,38 @@ jobs:
             cd ~/taski
             export COMPOSE_PROJECT_NAME=taski
 
-            # проверка, что .env читается Compose (с подстановкой)
-            docker compose --env-file ./.env -f docker-compose.production.yml config > /dev/null
+            sudo docker compose --env-file ./.env -f docker-compose.production.yml config > /dev/null
+            sudo docker compose --env-file ./.env -f docker-compose.production.yml pull
+            sudo docker compose --env-file ./.env -f docker-compose.production.yml down
 
-            # свежие образы и чистый старт
-            docker compose --env-file ./.env -f docker-compose.production.yml pull
-            docker compose --env-file ./.env -f docker-compose.production.yml down
+            # 1) только БД
+            sudo docker compose --env-file ./.env -f docker-compose.production.yml up -d db
+            sleep 2 || true
+            sudo docker compose -f docker-compose.production.yml ps db || true
 
-            # 1) поднимаем только БД
-            docker compose --env-file ./.env -f docker-compose.production.yml up -d db
-            sleep 2
-            docker compose -f docker-compose.production.yml ps db || true
-
-            # 2) если не Up — показать логи и попытаться авто-починить том
-            if ! docker compose -f docker-compose.production.yml ps db | grep -q 'Up'; then
-              echo ">>> DB not Up. Recent logs:"; docker compose -f docker-compose.production.yml logs --tail=200 db || true
-            fi
-
-            # ждём готовности (10 попыток по 2 сек)
+            # 2) ждём Postgres
             TRY=0
-            until docker compose -f docker-compose.production.yml exec -T db bash -lc 'pg_isready -h 127.0.0.1 -p 5432'; do
+            until sudo docker compose -f docker-compose.production.yml exec -T db bash -lc 'pg_isready -h 127.0.0.1 -p 5432'; do
               TRY=$((TRY+1))
               if [ "$TRY" -ge 10 ]; then
-                echo ">>> DB still not ready. Resetting pg_data_production volume (DATA WILL BE REMOVED)."
-                docker compose -f docker-compose.production.yml down
-                VOL=$(docker volume ls -q | grep -E '^taski_pg_data_production$' || true)
-                if [ -n "$VOL" ]; then docker volume rm "$VOL"; fi
-                docker compose --env-file ./.env -f docker-compose.production.yml up -d db
+                echo ">>> DB still not ready. Reset volume (DATA WILL BE REMOVED)."
+                sudo docker compose -f docker-compose.production.yml down
+                VOL=$(sudo docker volume ls -q | grep -E '^taski_pg_data_production$' || true)
+                if [ -n "$VOL" ]; then sudo docker volume rm "$VOL"; fi
+                sudo docker compose --env-file ./.env -f docker-compose.production.yml up -d db
                 sleep 3
                 TRY=0
               fi
               echo "waiting for postgres..."; sleep 2;
             done
 
-            # 3) поднимаем весь стек
-            docker compose --env-file ./.env -f docker-compose.production.yml up -d
+            # 3) весь стек
+            sudo docker compose --env-file ./.env -f docker-compose.production.yml up -d
 
-            # 4) миграции и сбор статики в одноразовых контейнерах
-            docker compose -f docker-compose.production.yml run --rm backend python manage.py migrate --noinput
-            docker compose -f docker-compose.production.yml run --rm backend python manage.py collectstatic --noinput
-            docker compose -f docker-compose.production.yml run --rm backend bash -lc 'cp -r /app/collected_static/. /backend_static/static/'
+            # 4) миграции/статика
+            sudo docker compose -f docker-compose.production.yml run --rm backend python manage.py migrate --noinput
+            sudo docker compose -f docker-compose.production.yml run --rm backend python manage.py collectstatic --noinput
+            sudo docker compose -f docker-compose.production.yml run --rm backend bash -lc 'cp -r /app/collected_static/. /backend_static/static/'
 
   send_message:
     runs-on: ubuntu-latest
