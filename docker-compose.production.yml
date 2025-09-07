@@ -6,23 +6,15 @@ volumes:
 
 networks:
   taski-net:
-    driver: bridge
 
 services:
   db:
     image: postgres:13.10
     env_file: .env
-    volumes:
-      - pg_data_production:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-django} -d ${POSTGRES_DB:-django}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
     networks:
       - taski-net
-    restart: unless-stopped
+    volumes:
+      - pg_data_production:/var/lib/postgresql/data
 
   backend:
     image: ilchukmaxim/taski_backend:latest
@@ -30,15 +22,18 @@ services:
     volumes:
       - static_volume:/backend_static
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     networks:
       - taski-net
-    restart: unless-stopped
+    volumes:
+      - static_volume:/backend_static
 
   frontend:
     image: ilchukmaxim/taski_frontend:latest
-    command: cp -r /app/build/. /frontend_static/
+    command: >
+      sh -lc "mkdir -p /frontend_static/frontend
+      && rm -rf /frontend_static/frontend/*
+      && cp -r /app/build/* /frontend_static/frontend/"
     volumes:
       - static_volume:/frontend_static
     networks:
