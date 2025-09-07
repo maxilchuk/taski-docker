@@ -223,9 +223,9 @@ jobs:
             sudo docker compose --env-file ./.env -f docker-compose.production.yml up -d
 
             # 4) миграции/статика
-            sudo docker compose -f docker-compose.production.yml run --rm backend python manage.py migrate --noinput
-            sudo docker compose -f docker-compose.production.yml run --rm backend python manage.py collectstatic --noinput
-            sudo docker compose -f docker-compose.production.yml run --rm backend bash -lc 'cp -r /app/collected_static/. /backend_static/static/'
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+            sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/ 
 
   send_message:
     runs-on: ubuntu-latest
