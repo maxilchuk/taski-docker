@@ -37,7 +37,7 @@ jobs:
         pip install flake8==6.0.0 flake8-isort==6.0.0
         pip install -r ./backend/requirements.txt 
     # Этот шаг дополним переменными для доступа к БД
-    - name: Test with flake8 and django tests
+    - name: Test with flake8 and django backend_tests
       # Добавляем env-переменные для доступа к БД
       env:
         POSTGRES_USER: django_user
@@ -57,7 +57,7 @@ jobs:
   build_and_push_to_docker_hub:
     name: Push Docker image to DockerHub
     runs-on: ubuntu-latest
-    needs: tests
+    needs: backend_tests
     steps:
       - name: Check out the repo
         # Получение исходного кода из репозитория
