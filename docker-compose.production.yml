@@ -1,8 +1,12 @@
-# docker-compose.production.yml
+version: "3.9"
 
 volumes:
   pg_data_production:
   static_volume:
+
+networks:
+  taski-net:
+    driver: bridge
 
 services:
   db:
@@ -10,21 +14,46 @@ services:
     env_file: .env
     volumes:
       - pg_data_production:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-django} -d ${POSTGRES_DB:-django}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - taski-net
+    restart: unless-stopped
+
   backend:
-    image: ilchukmaxim/taski_backend # Качаем с Docker Hub
+    image: ilchukmaxim/taski_backend:latest
     env_file: .env
     volumes:
       - static_volume:/backend_static
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - taski-net
+    restart: unless-stopped
+
   frontend:
-    image: ilchukmaxim/taski_frontend  # Качаем с Docker Hub
+    image: ilchukmaxim/taski_frontend:latest
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static_volume:/frontend_static
+    networks:
+      - taski-net
+    restart: "no"
 
   gateway:
-    image: ilchukmaxim/taski_gateway  # Качаем с Docker Hub
+    image: ilchukmaxim/taski_gateway:latest
     env_file: .env
     volumes:
       - static_volume:/staticfiles/
     ports:
-      - 8000:80
+      - "8000:80"
+    depends_on:
+      - backend
+    networks:
+      - taski-net
+    restart: unless-stopped
