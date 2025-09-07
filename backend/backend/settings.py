@@ -59,16 +59,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+DB_NAME = (os.getenv('POSTGRES_DB') or 'django').strip()
+DB_USER = (os.getenv('POSTGRES_USER') or 'django').strip()
+DB_PASSWORD = os.getenv('POSTGRES_PASSWORD') or ''
+DB_HOST = (os.getenv('DB_HOST') or 'db').strip()
+DB_PORT = int(os.getenv('DB_PORT') or 5432)
+
 DATABASES = {
     'default': {
-        # Меняем настройку Django: теперь для работы будет использоваться
-        # бэкенд postgresql
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'django'),
-        'USER': os.getenv('POSTGRES_USER', 'django'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', 5432)
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
 
