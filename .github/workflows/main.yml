@@ -174,14 +174,12 @@ jobs:
           script: |
             set -e
             mkdir -p ~/taski
-            cat > ~/taski/.env <<'EOF'
+            cat > ~/taski/.env <<EOF
             POSTGRES_USER=${POSTGRES_USER}
             POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
             POSTGRES_DB=${POSTGRES_DB}
             DB_HOST=db
             DB_PORT=5432
-            DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-            DJANGO_DEBUG=False
             EOF
 
       - name: Deploy via docker compose
